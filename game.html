@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>返京游戏</title>
+</head>
+<body>
+	
+	<canvas id="myCanvas" width="900"  height="650" style="border:1px solid #d3d3d3;margin-top: 60px;" onclick="onCircle()" onmousedown="down()" onmouseup="up()">
+		Your browser does not support the HTML5 canvas tag.
+	</canvas>
+</body>
+
+</html>
+<script src="js/jquery.js"></script>
+<script>
+//全局变量
+//每块的大小
+var blockSize = 52;//每块的像素尺寸
+var Width = 17;//整个场地的宽度
+var Height = 12;//整个场地的高度
+var PI = 3.14159265354;
+var pi = PI;
+
+var pinghuan = 30;//平缓程度
+var dou = 10;//陡峭
+var offiset = 100;//偏移
+var pinglv = 0.2;//频率
+var times = 2/pinglv;
+
+var posx=5;//人的x坐标
+var posy=5;//人的y坐标
+var dirdection = 40;//人物方向
+var links = 2;//接着第几张
+var c=document.getElementById("myCanvas");
+var cxt=c.getContext("2d");
+var npcx = 10;
+var npcy = 10;
+var blocks = [];
+
+setInterval(drawBase,200);
+drawBase();
+init();
+
+//随机生成方块
+
+function generBlocks(){
+	
+	for(var i=0;i<Height;i++){
+		for(var j=0;j<Width;j++){
+			var kk = Math.random();
+			var cango = kk>=0.15?1:0;
+		
+			blocks.push({x:i,y:j,types:kk,go:cango});
+		}
+	}
+}
+
+//画一切
+function drawBase(){
+	var img=new Image();
+	img.src = "img/maps.png";
+	img.onload=function() {
+		cxt.clearRect(0,0,800,600);
+		
+		for(var i=0;i<blocks.length;i++){//画随机生成的方块
+			drawBlock(blocks[i]);	
+		}
+		
+		drawPerson();//画你的英雄
+		drawNPC();//画出任务的NPC
+	}
+}
+//初始化
+function init(){
+	generBlocks();
+	initNPC();
+	initPerson();
+}
+
+//初始化NPC的位置，至少不要让他出现在水上
+function initNPC(){
+	
+	
+	while(true){
+		
+		npcx = Math.floor(Math.random()*Width);
+		npcy = Math.floor(Math.random()*Height);
+		
+		var pos = npcy*Width-(-npcx);
+		if(blocks[pos].go==1)break;
+	}
+	
+}
+
+function initPerson(){
+	while(true){
+		
+		posx = Math.floor(Math.random()*Width);
+		posy = Math.floor(Math.random()*Height);
+		console.log(posx+","+posy);
+		var pos = posy*Width-(-posx);
+		if(blocks[pos].go==1)break;
+	}
+	
+}
+
+function drawNPC(){
+	var img = new Image();
+	img.src = "img/person2.png";
+	cxt.drawImage(img,0,0,67,66, npcx*blockSize,npcy*blockSize,50,50);
+	
+}
+//画场上的人物
+function drawPerson(){
+	/*cxt.beginPath();
+	cxt.save();
+	cxt.arc(posx*blockSize-blockSize*(-0.5),posy*blockSize-blockSize*(-0.5),blockSize/2,0,2*PI,true);
+	cxt.fillStyle = "blue";
+	cxt.fill()
+	cxt.restore();
+	cxt.closePath();*/
+	var img=new Image();
+	img.src="img/person.png";
+	if(dirdection==40){
+		cxt.drawImage(img,66*links,0,67,66, (posx)*blockSize,(posy)*blockSize,50,50);
+	}else if(dirdection==37){
+		cxt.drawImage(img,66*links,66-3,67,66, (posx)*blockSize,(posy)*blockSize,50,50);
+	}else if(dirdection==39){
+		cxt.drawImage(img,66*links,66*2-2,67,66,(posx)*blockSize,(posy)*blockSize,50,50);
+		
+	}else if(dirdection==38){
+		cxt.drawImage(img,66*links,66*3,67,66, (posx)*blockSize,(posy)*blockSize,50,50);
+	}
+	
+}
+
+
+
+//画线方法
+function drawLine(beginX,beginY,endX,endY){
+	cxt.beginPath();
+	cxt.strokeStyle  = "#0099CC"
+	cxt.moveTo(beginX,beginY);
+	cxt.lineTo(endX,endY);
+	cxt.closePath();
+	cxt.stroke();
+}
+
+
+
+//画方块方法
+function drawBlock(obj){
+	cxt.beginPath();
+	if(obj.types<0.15){
+		drawWaterBlock(obj);
+		
+		
+	}else if(obj.types<0.11){
+		drawStoneBlock(obj);
+	}else if(obj.types<0.8){
+		drawGrassBlock(obj);
+	}
+	else{
+		
+		drawRockBlock(obj);
+	}
+	cxt.closePath();
+	//cxt.restore()
+	
+}
+
+//画草路
+function drawGrassBlock(obj){
+	var img=new Image();
+   	img.src="img/maps.png";
+ 	cxt.drawImage(img,32*7,32*2,32,31, obj.y*blockSize,obj.x*blockSize,blockSize,blockSize);
+}
+//画土道路
+function drawRockBlock(obj){
+/*	cxt.rect(obj.y*blockSize,obj.x*blockSize,blockSize,blockSize);
+	cxt.fillStyle = "#cccccc";
+	cxt.fill();	*/
+	var img=new Image();
+   	img.src="img/maps.png";
+ 	cxt.drawImage(img,32*1,32*2,32,31, obj.y*blockSize,obj.x*blockSize,blockSize,blockSize);
+}
+//画石头路
+function drawStoneBlock(obj){
+	var img=new Image();
+   	img.src="img/maps.png";
+ 	cxt.drawImage(img,32*0,32*6,32,31, obj.y*blockSize,obj.x*blockSize,blockSize,blockSize);
+}
+//画水方块
+function drawWaterBlock(obj){
+	/*cxt.rect(obj.y*blockSize,obj.x*blockSize,blockSize,blockSize);
+	cxt.fillStyle = "#00CCFF";
+	cxt.fill();	*/
+	var img=new Image();
+   	img.src="img/maps.png";
+ 	cxt.drawImage(img,32*3,32*7,32,31, obj.y*blockSize,obj.x*blockSize,blockSize,blockSize);
+}
+
+
+
+//画曲线
+function drawQLine(){
+	var w = Math.random()*5;
+	var k = Math.random();
+	console.log(k);
+	if(k>0.5){
+		if(pinghuan>30){
+			pinghuan-=w;
+		}else{
+			pinghuan+=w;
+		}
+	}
+	
+	//alert(Math.sin(0.5*PI))
+	for(var i=0;i<times;i++){
+		var w = i*pinghuan;
+		var w_ = (i+1)*pinghuan;
+		drawLine(pinglv*pi*w,Math.sin(pinglv*i*pi)*dou+offiset,pinglv*pi*w_,Math.sin(pinglv*(i+1)*pi)*dou+offiset);
+	}
+	
+	
+}
+function judgeCanMove(k){
+	var nextx = posx;
+	var nexty = posy;
+	 if(k==38){
+		nexty--;
+	
+	}else if(k==40){
+		nexty++;
+	}else if(k==37){
+		nextx--;
+	}else if(k==39){
+		nextx++;
+		
+	}
+	if(nextx>=Width)return 0;
+	if(nexty>=Height)return 0;
+	if(nextx<0)return 0;
+	if(nexty<0) return 0;
+	if(nextx==npcx&&nexty==npcy)return 0;
+	console.log("nextx="+nextx+"nexty="+nexty)
+	var realPos = nexty*Width-(0-nextx);
+	console.log(blocks);
+	console.log(blocks[realPos]);
+	console.log("realPos="+realPos);
+	if(blocks[realPos].go==0)return 0;
+	return 1;
+	
+	
+}
+var talk = ["Hi,你好！","我需要你的帮助。","我叫约翰，是这的村民。","你能帮吗?","那太好了，请你赶快这个村子。","有人要到京城谋反,你一定要阻止啊!"];
+var idx = 0;
+$(document).keydown(function(event){
+	//alert(event.keyCode)
+	var k = event.keyCode;
+	//alert(k);
+	if(k>=37&&k<=40){
+		var ok = judgeCanMove(k);
+		dirdection = k;
+		if(ok==0)return;
+		if(dirdection==k)links = (links-(-1))%3;
+		
+	}
+　　　if(k == 13){
+　　　　　　alert('你按下了Enter'); 
+　　　}else if(k==38){//上箭头
+		posy--;
+	
+	}else if(k==40){//下箭头
+		posy++;
+	}else if(k==37){//左键头
+		posx--;
+	}else if(k==39){//右箭头
+		posx++;
+		
+	}else if(k==32){//空格
+		var nextx = posx;
+		var nexty = posy;
+		 if(dirdection==38){
+			nexty--;
+		
+		}else if(dirdection==40){
+			nexty++;
+		}else if(dirdection==37){
+			nextx--;
+		}else if(dirdection==39){
+			nextx++;
+			
+		}
+		
+		if(nextx==npcx&&nexty==npcy){
+			alert(talk[idx++]);
+		}
+	}
+	
+});
+
+
+function down(){
+
+}
+function up(){
+	
+}
+function onCircle(){
+	
+}
+	
+</script>
